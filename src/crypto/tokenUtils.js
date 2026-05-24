@@ -6,8 +6,8 @@ import { env } from '../config/env.js';
 let privateKey, publicKey;
 
 try {
-  privateKey = fs.readFileSync(env.JWT_PRIVATE_KEY_PATH, 'utf8');
-  publicKey = fs.readFileSync(env.JWT_PUBLIC_KEY_PATH, 'utf8');
+  privateKey = process.env.JWT_PRIVATE_KEY || fs.readFileSync(env.JWT_PRIVATE_KEY_PATH, 'utf8');
+  publicKey = process.env.JWT_PUBLIC_KEY || fs.readFileSync(env.JWT_PUBLIC_KEY_PATH, 'utf8');
 } catch {
   // Fallback to HMAC if RSA keys don't exist (dev convenience)
   privateKey = env.COOKIE_SECRET;

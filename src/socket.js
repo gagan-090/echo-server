@@ -22,15 +22,21 @@ export const initSocket = (httpServer) => {
   io.adapter(createAdapter(pubClient, subClient));
 
   // Load public key for JWT verification
-  const publicKey = fs.readFileSync(path.resolve('keys/public.pem'), 'utf8');
-
-  // Middleware: Authenticate socket connections using the RS256 JWT
+  let publicKey;
+  let isRSA = false;
+  try {
+    publicKey = process.env.JWT_PUBLIC_KEY || fs.readFileSync(path.resolve('keys/public.pem'), 'utf8');
+    isRSA = publicKey.includes('-----BEGIN');
+  } catch {
+    publicKey = env.COOKIE_SECRET;
+  }
+  // Middleware: Authenticate socket connections using the RS256/HS256 JWT
   io.use((socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
       if (!token) return next(new Error('Authentication error: Token missing'));
 
-      const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+      const decoded = jwt.verify(token, publicKey, { algorithms: [isRSA ? 'RS256' : 'HS256'] });
       socket.user = { id: decoded.sub, ...decoded }; // map sub to id
       next();
     } catch (err) {
