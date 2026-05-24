@@ -19,7 +19,8 @@ export async function create(req, res, next) {
       req.params.id,
       req.user.id,
       req.body.content,
-      req.body.type || 'text'
+      req.body.type || 'text',
+      req.body.fileData || null
     );
     res.status(201).json({ data: msg });
   } catch (err) {
