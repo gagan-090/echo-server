@@ -113,11 +113,11 @@ export async function verifyPhoneOtp(req, res, next) {
 // ==============================================
 export async function registerEmail(req, res, next) {
   try {
-    const { email, password, display_name } = req.body;
+    const { email, password, display_name, ref } = req.body;
     const result = await emailService.register(email, password, display_name);
     
     // Always send verification email (cooldown is handled inside)
-    await emailService.sendVerificationEmail(result.userId, email, display_name, 'verify_email');
+    await emailService.sendVerificationEmail(result.userId, email, display_name, 'verify_email', ref);
     
     res.status(201).json({ data: result });
   } catch (err) {
@@ -127,12 +127,33 @@ export async function registerEmail(req, res, next) {
 
 export async function verifyEmailTokenHandler(req, res, next) {
   try {
-    const { token } = req.body;
+    const { token, ref } = req.body;
     if (!token) return res.status(400).json({ error: 'BAD_REQUEST', message: 'Missing token' });
     
     const { user, isNewUser } = await emailService.verifyEmailToken(token);
     
     if (user) {
+      if (isNewUser && ref) {
+        try {
+          const convService = await import('../services/conversation.service.js');
+          const conv = await convService.getOrCreate(user.id, ref);
+          const { messageQueue } = await import('../workers/realtime.worker.js');
+          
+          messageQueue.add('new_conversation_ref', {
+            event: 'new_conversation',
+            receiverId: ref,
+            payload: conv,
+          });
+          messageQueue.add('new_conversation_user', {
+            event: 'new_conversation',
+            receiverId: user.id,
+            payload: conv,
+          });
+        } catch (e) {
+          console.error('Failed to create referral conversation:', e);
+        }
+      }
+
       const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, getClientInfo(req));
       res.cookie('refreshToken', refreshToken, cookieOpts);
       return res.json({ data: { user, accessToken, isNewUser } });

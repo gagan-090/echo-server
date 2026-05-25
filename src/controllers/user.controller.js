@@ -25,6 +25,16 @@ export async function updatePresence(req, res, next) {
   catch (err) { next(err); }
 }
 
+export async function updateDeviceToken(req, res, next) {
+  try {
+    const { fcmToken } = req.body;
+    await userService.updateUser(req.user.id, { fcm_token: fcmToken });
+    res.json({ data: { success: true } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function uploadAvatar(req, res, next) {
   try {
     if (!req.file) throw Object.assign(new Error('No file provided'), { statusCode: 400 });

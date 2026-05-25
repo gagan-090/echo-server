@@ -43,7 +43,7 @@ export async function register(email, password, displayName) {
   return { success: true, message: 'Check your email to verify your account', userId: newUser.id, isResend: false };
 }
 
-export async function sendVerificationEmail(userId, email, displayName, purpose = 'verify_email') {
+export async function sendVerificationEmail(userId, email, displayName, purpose = 'verify_email', ref = null) {
   // 1. Generate raw token
   const rawToken = crypto.randomBytes(48).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -78,7 +78,8 @@ export async function sendVerificationEmail(userId, email, displayName, purpose 
   if (insertErr) throw new Error('Database error generating verification token.');
 
   // 5. Build URL and HTML
-  const url = `${FRONTEND_URL}/verify-email?token=${rawToken}&purpose=${purpose}`;
+  let url = `${FRONTEND_URL}/verify-email?token=${rawToken}&purpose=${purpose}`;
+  if (ref) url += `&ref=${ref}`;
     const htmlContent = `
       <!DOCTYPE html>
       <html>

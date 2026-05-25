@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { encrypt, decrypt } from '../crypto/encryption.js';
 import { deriveConversationKey } from '../crypto/keyDerivation.js';
+import { messaging } from '../config/firebase.js';
 
 /**
  * Get paginated messages for a conversation (cursor-based).
@@ -145,6 +146,29 @@ export async function createMessage(convId, senderId, content, messageType = 'te
       receiverId,
       payload: { conversation_id: convId }
     });
+
+    // Send FCM Push Notification
+    const { data: receiverData } = await supabase.from('users').select('fcm_token').eq('id', receiverId).single();
+    if (receiverData && receiverData.fcm_token && messaging) {
+      const { data: senderData } = await supabase.from('users').select('display_name').eq('id', senderId).single();
+      const senderName = senderData ? senderData.display_name : 'Someone';
+      
+      try {
+        await messaging().send({
+          token: receiverData.fcm_token,
+          notification: {
+            title: `New message from ${senderName}`,
+            body: preview
+          },
+          data: {
+            conversation_id: convId,
+            type: 'new_message'
+          }
+        });
+      } catch (err) {
+        console.error('Failed to send FCM notification:', err.message);
+      }
+    }
   }
 
   return {

@@ -17,6 +17,17 @@ export const messageWorker = new Worker(QUEUE_NAME, async (job) => {
     getIO().to(`user_${receiverId}`).emit('new_message', payload);
   } else if (event === 'messages_read') {
     getIO().to(`user_${receiverId}`).emit('messages_read', payload);
+  } else if ([
+    'incoming_call', 
+    'call_accepted', 
+    'call_rejected', 
+    'call_ended', 
+    'webrtc_ice_candidate', 
+    'webrtc_offer', 
+    'webrtc_answer',
+    'new_conversation'
+  ].includes(event)) {
+    getIO().to(`user_${receiverId}`).emit(event, payload);
   }
   
 }, { connection: redis });

@@ -6,7 +6,24 @@ export async function list(req, res, next) {
 }
 
 export async function create(req, res, next) {
-  try { res.status(201).json({ data: await convService.getOrCreate(req.user.id, req.body.userId) }); }
+  try {
+    const targetUserId = req.body.userId;
+    const conv = await convService.getOrCreate(req.user.id, targetUserId);
+    
+    // Attempt to notify the remote user of the new conversation via socket
+    try {
+      const { messageQueue } = await import('../workers/realtime.worker.js');
+      messageQueue.add('new_conversation_manual', {
+        event: 'new_conversation',
+        receiverId: targetUserId,
+        payload: conv,
+      });
+    } catch (e) {
+      console.error('Failed to notify remote user of new conversation:', e);
+    }
+    
+    res.status(201).json({ data: conv });
+  }
   catch (err) { next(err); }
 }
 

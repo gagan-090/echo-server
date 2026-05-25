@@ -13,6 +13,7 @@ router.get('/me', userCtrl.getMe);
 router.patch('/me', validate(updateProfileSchema), userCtrl.updateProfile);
 router.post('/me/avatar', upload.single('avatar'), userCtrl.uploadAvatar);
 router.patch('/me/presence', userCtrl.updatePresence);
+router.post('/me/device-token', userCtrl.updateDeviceToken);
 router.get('/search', userCtrl.searchUsers);
 router.get('/:id', userCtrl.getById);
 export default router;
