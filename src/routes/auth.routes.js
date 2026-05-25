@@ -19,4 +19,5 @@ router.post('/email/register', authLimiter, authCtrl.registerEmail);
 router.post('/email/verify', authLimiter, authCtrl.verifyEmailTokenHandler);
 router.post('/email/resend-verification', authLimiter, authCtrl.resendVerification);
 router.post('/email/login', authLimiter, authCtrl.loginEmail);
+router.post('/email/check-status', authLimiter, authCtrl.checkEmailStatus);
 export default router;

@@ -253,3 +253,8 @@ export async function login(email, password) {
 
   return { user };
 }
+
+export async function checkStatus(email) {
+  const { data: user } = await db.from('users').select('email_verified').eq('email', email).single();
+  return user ? user.email_verified : false;
+}

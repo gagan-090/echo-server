@@ -166,3 +166,14 @@ export async function loginEmail(req, res, next) {
     next(err);
   }
 }
+
+export async function checkEmailStatus(req, res, next) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'BAD_REQUEST', message: 'Missing email' });
+    const isVerified = await emailService.checkStatus(email);
+    res.json({ data: { isVerified } });
+  } catch (err) {
+    next(err);
+  }
+}
