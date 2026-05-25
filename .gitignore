@@ -5,3 +5,5 @@ dist/
 payload*.json
 env.json
 apply_migrations.js
+*-firebase-adminsdk-*.json
+src/*.json
