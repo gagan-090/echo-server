@@ -1,6 +1,6 @@
 import twilio from 'twilio';
 import crypto from 'crypto';
-import db from '../db/supabase.js'; // Assuming direct pg/supabase client is exposed here
+import { supabase as db } from '../config/supabase.js';
 import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
