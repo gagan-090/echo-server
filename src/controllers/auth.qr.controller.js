@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { supabase } from '../config/supabase.js';
-import { generateTokens } from '../crypto/tokenUtils.js';
+import * as authService from '../services/auth.service.js';
 
 const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
@@ -90,7 +90,10 @@ export const confirmQrSession = async (req, res) => {
     }
 
     // Generate tokens for web
-    const { accessToken, refreshToken } = await generateTokens(userId);
+    const { accessToken, refreshToken } = await authService.generateTokensForUser(userId, {
+      userAgent: req.headers['user-agent'],
+      ip: req.ip
+    });
 
     // Save tokens in session (for web to claim)
     const { error: updateError } = await supabase

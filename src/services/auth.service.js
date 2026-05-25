@@ -123,3 +123,26 @@ export async function logout(token) {
     .update({ is_revoked: true, revoked_at: new Date().toISOString(), revoked_reason: 'logout' })
     .eq('token_hash', tokenHash);
 }
+
+export async function generateTokensForUser(userId, { userAgent, ip } = {}) {
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, email')
+    .eq('id', userId)
+    .single();
+
+  const accessToken = generateAccessToken({ sub: user.id, email: user.email });
+  const refreshToken = generateRefreshToken();
+  const tokenHash = hashToken(refreshToken);
+  const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS).toISOString();
+
+  await supabase.from('refresh_tokens').insert({
+    user_id: user.id,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+    user_agent: userAgent || null,
+    ip_address: ip || null,
+  });
+
+  return { accessToken, refreshToken };
+}
