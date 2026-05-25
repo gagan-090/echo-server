@@ -116,9 +116,8 @@ export async function registerEmail(req, res, next) {
     const { email, password, display_name } = req.body;
     const result = await emailService.register(email, password, display_name);
     
-    if (!result.isResend) {
-      await emailService.sendVerificationEmail(result.userId, email, display_name, 'verify_email');
-    }
+    // Always send verification email (cooldown is handled inside)
+    await emailService.sendVerificationEmail(result.userId, email, display_name, 'verify_email');
     
     res.status(201).json({ data: result });
   } catch (err) {
