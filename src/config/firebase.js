@@ -34,4 +34,4 @@ try {
   console.warn('Firebase Admin initialization skipped or failed:', error.message);
 }
 
-export const messaging = admin.messaging;
+export const messaging = admin.messaging();

@@ -167,7 +167,7 @@ export async function createMessage(convId, senderId, content, messageType = 'te
       const senderName = senderData ? senderData.display_name : 'Someone';
       
       try {
-        await messaging().send({
+        await messaging.send({
           token: receiverData.fcm_token,
           notification: {
             title: `New message from ${senderName}`,
@@ -178,6 +178,7 @@ export async function createMessage(convId, senderId, content, messageType = 'te
             type: 'new_message'
           }
         });
+        console.log(`FCM notification sent to user ${receiverId}`);
       } catch (err) {
         console.error('Failed to send FCM notification:', err.message);
       }

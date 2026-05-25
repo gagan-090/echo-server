@@ -27,7 +27,7 @@ export const messageWorker = new Worker(QUEUE_NAME, async (job) => {
         .single();
         
       if (user && user.fcm_token) {
-        await messaging().send({
+        await messaging.send({
           token: user.fcm_token,
           notification: {
             title: payload.sender_name || 'New Message',
