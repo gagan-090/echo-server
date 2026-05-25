@@ -35,7 +35,10 @@ export async function register(email, password, displayName) {
     registration_step: 'pending_email_verify',
   }).select().single();
 
-  if (insertErr) throw new Error('Failed to register user.');
+  if (insertErr) {
+    console.error('INSERT ERROR:', insertErr);
+    throw new Error('Failed to register user.');
+  }
 
   return { success: true, message: 'Check your email to verify your account', userId: newUser.id, isResend: false };
 }
