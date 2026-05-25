@@ -141,10 +141,23 @@ export async function createMessage(convId, senderId, content, messageType = 'te
   const { data: conv } = await supabase.from('conversations').select('participant_a, participant_b').eq('id', convId).single();
   if (conv) {
     const receiverId = conv.participant_a === senderId ? conv.participant_b : conv.participant_a;
+    const msgPayload = {
+      id: data.id,
+      conversation_id: data.conversation_id,
+      sender_id: data.sender_id,
+      content,
+      message_type: data.message_type,
+      file_url: data.file_url,
+      file_name: data.file_name,
+      file_size_bytes: data.file_size_bytes,
+      is_deleted: false,
+      sent_at: data.sent_at,
+    };
+
     await messageQueue.add('notify_message', {
       event: 'new_message',
       receiverId,
-      payload: { conversation_id: convId }
+      payload: msgPayload
     });
 
     // Send FCM Push Notification
