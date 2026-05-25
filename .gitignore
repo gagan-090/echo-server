@@ -2,3 +2,6 @@ node_modules/
 .env
 keys/*.pem
 dist/
+payload*.json
+env.json
+apply_migrations.js

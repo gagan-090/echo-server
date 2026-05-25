@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes.js';
+import authQrRoutes from './auth.qr.routes.js';
 import userRoutes from './user.routes.js';
 import conversationRoutes from './conversation.routes.js';
 import messageRoutes from './message.routes.js';
@@ -9,6 +10,7 @@ import callRoutes from './call.routes.js';
 
 const router = Router();
 router.use('/auth', authRoutes);
+router.use('/auth', authQrRoutes);
 router.use('/users', userRoutes);
 router.use('/conversations', conversationRoutes);
 router.use('/conversations', messageRoutes);
