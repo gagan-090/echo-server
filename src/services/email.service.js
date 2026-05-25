@@ -5,7 +5,7 @@ import { supabase as db } from '../config/supabase.js';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Echo <noreply@echo.chat>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Echo <verifyecho@gaganshukla.in>';
 
 export async function register(email, password, displayName) {
   // 1. Check if email exists
