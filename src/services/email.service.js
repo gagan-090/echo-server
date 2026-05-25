@@ -76,17 +76,74 @@ export async function sendVerificationEmail(userId, email, displayName, purpose 
 
   // 5. Build URL and HTML
   const url = `${FRONTEND_URL}/verify-email?token=${rawToken}&purpose=${purpose}`;
-  
-  const htmlContent = `
-    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-      <h2 style="color: #18A0A0;">Echo</h2>
-      <h3>Verify your email address</h3>
-      <p>Hi ${displayName || 'there'},</p>
-      <p>Please verify your email address by clicking the link below:</p>
-      <a href="${url}" style="display:inline-block; padding:12px 24px; background:#18A0A0; color:#fff; text-decoration:none; border-radius:8px;">Verify Email</a>
-      <p>If the button doesn't work, copy and paste this link: <br> ${url}</p>
-    </div>
-  `;
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Lora:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f2f4f6; font-family: 'DM Sans', Arial, sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f2f4f6" style="padding: 40px 20px;">
+          <tr>
+            <td align="center">
+              <table width="100%" max-width="500" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="max-width: 500px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); overflow: hidden;">
+                <tr>
+                  <td align="center" style="padding: 48px 32px;">
+                    
+                    <!-- Logo -->
+                    <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 8px;">
+                      <tr>
+                        <td align="center">
+                          <svg fill="none" height="28" viewBox="0 0 48 24" width="56" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 12C2 12 6 2 10 2C14 2 18 22 22 22C26 22 30 12 34 12C38 12 42 22 46 22" stroke="#067268" stroke-linecap="round" stroke-width="3" />
+                          </svg>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <h1 style="margin: 0 0 4px 0; font-family: 'Lora', Georgia, serif; font-size: 28px; color: #067268; font-weight: 400; letter-spacing: -0.5px;">Echo</h1>
+                    <p style="margin: 0 0 40px 0; font-family: 'Lora', Georgia, serif; font-size: 16px; color: #6b7280; font-style: italic;">Clear conversations.</p>
+
+                    <!-- Icon -->
+                    <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
+                      <tr>
+                        <td align="center" width="64" height="64" bgcolor="#067268" style="border-radius: 50%;">
+                          <img src="https://api.iconify.design/material-symbols:mail-outline.svg?color=%23ffffff" width="32" height="32" alt="Mail" />
+                        </td>
+                      </tr>
+                    </table>
+
+                    <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #1f2937; font-weight: 500;">${purpose === 'verify_email' ? 'Verify your email' : 'Sign in to Echo'}</h2>
+                    <p style="margin: 0 0 32px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+                      ${purpose === 'verify_email' ? 'Click the button below to verify your email address and join Echo.' : 'Click the button below to securely sign in to your Echo account.'}
+                    </p>
+
+                    <!-- Button -->
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td align="center" bgcolor="#067268" style="border-radius: 9999px;">
+                          <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 32px; font-family: 'DM Sans', Arial, sans-serif; font-size: 15px; color: #ffffff; text-decoration: none; font-weight: 500;">
+                            ${purpose === 'verify_email' ? 'Verify Email Address' : 'Sign In'}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin: 40px 0 0 0; font-size: 13px; color: #9ca3af;">
+                      If you didn't request this, you can safely ignore this email.
+                    </p>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
 
   // 6. Send email via Resend
   let providerMessageId = null;
