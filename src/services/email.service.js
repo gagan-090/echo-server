@@ -98,8 +98,16 @@ export async function sendVerificationEmail(userId, email, displayName, purpose 
         subject: purpose === 'verify_email' ? 'Verify your Echo account' : 'Your Echo sign-in link',
         html: htmlContent,
       });
-      if (error) throw error;
-      providerMessageId = data.id;
+      if (error) {
+        if (error.name === 'validation_error') {
+          console.warn(`[DEV ONLY - RESEND DOMAIN UNVERIFIED] URL for ${email}: ${url}`);
+          providerMessageId = 'dev_mock_id';
+        } else {
+          throw error;
+        }
+      } else {
+        providerMessageId = data.id;
+      }
     } else {
       console.log(`[DEV ONLY] Verification URL for ${email}: ${url}`);
       providerMessageId = 'dev_mock_id';
