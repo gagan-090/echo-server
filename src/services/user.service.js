@@ -26,6 +26,7 @@ export async function updateUser(id, updates) {
   if (updates.display_name !== undefined) allowed.display_name = updates.display_name;
   if (updates.avatar_url !== undefined) allowed.avatar_url = updates.avatar_url;
   if (updates.bio !== undefined) allowed.bio = updates.bio;
+  if (updates.fcm_token !== undefined) allowed.fcm_token = updates.fcm_token;
 
   const { data, error } = await supabase
     .from('users')
