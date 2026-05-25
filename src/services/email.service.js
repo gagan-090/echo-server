@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 import { supabase as db } from '../config/supabase.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Echo <noreply@echo.chat>';
 
