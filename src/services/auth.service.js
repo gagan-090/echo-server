@@ -4,9 +4,9 @@ import { generateAccessToken, generateRefreshToken, hashToken } from '../crypto/
 import { SALT_ROUNDS } from '../config/constants.js';
 import { logger } from '../middleware/logger.js';
 
-const REFRESH_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const DEFAULT_REFRESH_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export async function login(email, password, { userAgent, ip } = {}) {
+export async function login(email, password, { userAgent, ip, expiresInMs } = {}) {
   const { data: user, error } = await supabase
     .from('users')
     .select('*')
@@ -26,7 +26,8 @@ export async function login(email, password, { userAgent, ip } = {}) {
   const accessToken = generateAccessToken({ sub: user.id, email: user.email });
   const refreshToken = generateRefreshToken();
   const tokenHash = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS).toISOString();
+  const expiryMs = expiresInMs || DEFAULT_REFRESH_EXPIRY_MS;
+  const expiresAt = new Date(Date.now() + expiryMs).toISOString();
 
   await supabase.from('refresh_tokens').insert({
     user_id: user.id,
@@ -43,7 +44,7 @@ export async function login(email, password, { userAgent, ip } = {}) {
   return { user: safeUser, accessToken, refreshToken };
 }
 
-export async function register(email, password, display_name, { userAgent, ip } = {}) {
+export async function register(email, password, display_name, { userAgent, ip, expiresInMs } = {}) {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   const { data: user, error } = await supabase
@@ -62,7 +63,8 @@ export async function register(email, password, display_name, { userAgent, ip } 
   const accessToken = generateAccessToken({ sub: user.id, email: user.email });
   const refreshToken = generateRefreshToken();
   const tokenHash = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS).toISOString();
+  const expiryMs = expiresInMs || DEFAULT_REFRESH_EXPIRY_MS;
+  const expiresAt = new Date(Date.now() + expiryMs).toISOString();
 
   await supabase.from('refresh_tokens').insert({
     user_id: user.id,
@@ -76,11 +78,12 @@ export async function register(email, password, display_name, { userAgent, ip } 
   return { user: safeUser, accessToken, refreshToken };
 }
 
-export async function refresh(token, { userAgent, ip } = {}) {
+export async function refresh(token, { userAgent, ip, expiresInMs } = {}) {
   const oldHash = hashToken(token);
   const newRefreshToken = generateRefreshToken();
   const newHash = hashToken(newRefreshToken);
-  const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS).toISOString();
+  const expiryMs = expiresInMs || DEFAULT_REFRESH_EXPIRY_MS;
+  const expiresAt = new Date(Date.now() + expiryMs).toISOString();
 
   // Use the DB function for atomic rotation with replay detection
   const { data, error } = await supabase.rpc('rotate_refresh_token', {
@@ -124,7 +127,7 @@ export async function logout(token) {
     .eq('token_hash', tokenHash);
 }
 
-export async function generateTokensForUser(userId, { userAgent, ip } = {}) {
+export async function generateTokensForUser(userId, { userAgent, ip, expiresInMs } = {}) {
   const { data: user } = await supabase
     .from('users')
     .select('id, email')
@@ -134,7 +137,8 @@ export async function generateTokensForUser(userId, { userAgent, ip } = {}) {
   const accessToken = generateAccessToken({ sub: user.id, email: user.email });
   const refreshToken = generateRefreshToken();
   const tokenHash = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + REFRESH_EXPIRY_MS).toISOString();
+  const expiryMs = expiresInMs || DEFAULT_REFRESH_EXPIRY_MS;
+  const expiresAt = new Date(Date.now() + expiryMs).toISOString();
 
   await supabase.from('refresh_tokens').insert({
     user_id: user.id,

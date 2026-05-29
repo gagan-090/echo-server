@@ -3,13 +3,23 @@ import * as phoneService from '../services/phone.service.js';
 import * as emailService from '../services/email.service.js';
 import { env } from '../config/env.js';
 
-const cookieOpts = {
-  httpOnly: true,
-  secure: env.COOKIE_SECURE === 'true',
-  sameSite: env.COOKIE_SAME_SITE,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/api/auth',
-};
+function getCookieOpts(expiresInMs) {
+  return {
+    httpOnly: true,
+    secure: env.COOKIE_SECURE === 'true',
+    sameSite: env.COOKIE_SAME_SITE,
+    maxAge: expiresInMs,
+    path: '/api/auth',
+  };
+}
+
+function getExpiry(req) {
+  const userAgent = req.headers['user-agent'] || '';
+  if (userAgent.includes('Dart') || userAgent.includes('Dio')) {
+    return 100 * 365 * 24 * 60 * 60 * 1000; // 100 years
+  }
+  return 30 * 24 * 60 * 60 * 1000; // 30 days
+}
 
 function getClientInfo(req) {
   return {
@@ -20,12 +30,16 @@ function getClientInfo(req) {
 
 export async function login(req, res, next) {
   try {
+    const clientInfo = getClientInfo(req);
+    const expiresInMs = getExpiry(req);
+    clientInfo.expiresInMs = expiresInMs;
+
     const { user, accessToken, refreshToken } = await authService.login(
       req.body.email,
       req.body.password,
-      getClientInfo(req)
+      clientInfo
     );
-    res.cookie('refreshToken', refreshToken, cookieOpts);
+    res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
     res.json({ data: { user, accessToken } });
   } catch (err) {
     next(err);
@@ -34,13 +48,17 @@ export async function login(req, res, next) {
 
 export async function register(req, res, next) {
   try {
+    const clientInfo = getClientInfo(req);
+    const expiresInMs = getExpiry(req);
+    clientInfo.expiresInMs = expiresInMs;
+
     const { user, accessToken, refreshToken } = await authService.register(
       req.body.email,
       req.body.password,
       req.body.display_name,
-      getClientInfo(req)
+      clientInfo
     );
-    res.cookie('refreshToken', refreshToken, cookieOpts);
+    res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
     res.status(201).json({ data: { user, accessToken } });
   } catch (err) {
     next(err);
@@ -53,11 +71,15 @@ export async function refresh(req, res, next) {
     if (!token) {
       return res.status(401).json({ error: 'UNAUTHORIZED', message: 'No refresh token', statusCode: 401 });
     }
+    const clientInfo = getClientInfo(req);
+    const expiresInMs = getExpiry(req);
+    clientInfo.expiresInMs = expiresInMs;
+
     const { accessToken, refreshToken: newRefresh } = await authService.refresh(
       token,
-      getClientInfo(req)
+      clientInfo
     );
-    res.cookie('refreshToken', newRefresh, cookieOpts);
+    res.cookie('refreshToken', newRefresh, getCookieOpts(expiresInMs));
     res.json({ data: { accessToken } });
   } catch (err) {
     next(err);
@@ -97,8 +119,12 @@ export async function verifyPhoneOtp(req, res, next) {
     const { user, isNewUser } = await phoneService.verifyOTP(phoneNumber, code, purpose);
     
     if (user) {
-      const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, getClientInfo(req));
-      res.cookie('refreshToken', refreshToken, cookieOpts);
+      const clientInfo = getClientInfo(req);
+      const expiresInMs = getExpiry(req);
+      clientInfo.expiresInMs = expiresInMs;
+
+      const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, clientInfo);
+      res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
       return res.json({ data: { user, accessToken, isNewUser } });
     }
     
@@ -154,8 +180,12 @@ export async function verifyEmailTokenHandler(req, res, next) {
         }
       }
 
-      const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, getClientInfo(req));
-      res.cookie('refreshToken', refreshToken, cookieOpts);
+      const clientInfo = getClientInfo(req);
+      const expiresInMs = getExpiry(req);
+      clientInfo.expiresInMs = expiresInMs;
+
+      const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, clientInfo);
+      res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
       return res.json({ data: { user, accessToken, isNewUser } });
     }
     
@@ -180,8 +210,12 @@ export async function loginEmail(req, res, next) {
     const { email, password } = req.body;
     const { user } = await emailService.login(email, password);
     
-    const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, getClientInfo(req));
-    res.cookie('refreshToken', refreshToken, cookieOpts);
+    const clientInfo = getClientInfo(req);
+    const expiresInMs = getExpiry(req);
+    clientInfo.expiresInMs = expiresInMs;
+
+    const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, clientInfo);
+    res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
     res.json({ data: { user, accessToken } });
   } catch (err) {
     next(err);

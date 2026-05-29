@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { v4 as uuid } from 'uuid';
 
 export async function uploadFile(buffer, filename, mimetype, userId) {
+  await supabase.storage.createBucket('attachments', { public: true }).catch(() => {});
   const path = `uploads/${userId}/${uuid()}-${filename}`;
   const { error } = await supabase.storage.from('attachments').upload(path, buffer, { contentType: mimetype });
   if (error) throw new Error(error.message);
