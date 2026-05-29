@@ -3,6 +3,7 @@ import * as authCtrl from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.js';
 import { loginSchema, registerSchema } from '../validators/auth.validator.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
+import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
 router.post('/login', authLimiter, validate(loginSchema), authCtrl.login);
@@ -20,4 +21,9 @@ router.post('/email/verify', authLimiter, authCtrl.verifyEmailTokenHandler);
 router.post('/email/resend-verification', authLimiter, authCtrl.resendVerification);
 router.post('/email/login', authLimiter, authCtrl.loginEmail);
 router.post('/email/check-status', authLimiter, authCtrl.checkEmailStatus);
+
+// Invitation system
+router.post('/email/invite', authLimiter, authenticate, authCtrl.inviteFriend);
+router.post('/email/accept-invite', authLimiter, authCtrl.acceptInvite);
+
 export default router;

@@ -232,3 +232,59 @@ export async function checkEmailStatus(req, res, next) {
     next(err);
   }
 }
+
+export async function inviteFriend(req, res, next) {
+  try {
+    const { email } = req.body;
+    const referrerId = req.user.id;
+    if (!email) {
+      return res.status(400).json({ error: 'BAD_REQUEST', message: 'Missing email address.' });
+    }
+    const result = await emailService.inviteFriend(referrerId, email);
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function acceptInvite(req, res, next) {
+  try {
+    const { token, password, displayName, ref } = req.body;
+    if (!token || !password || !displayName) {
+      return res.status(400).json({ error: 'BAD_REQUEST', message: 'Missing required fields.' });
+    }
+
+    const { user } = await emailService.acceptInvite(token, password, displayName);
+
+    if (user && ref) {
+      try {
+        const convService = await import('../services/conversation.service.js');
+        const conv = await convService.getOrCreate(user.id, ref);
+        const { messageQueue } = await import('../workers/realtime.worker.js');
+        
+        messageQueue.add('new_conversation_ref', {
+          event: 'new_conversation',
+          receiverId: ref,
+          payload: conv,
+        });
+        messageQueue.add('new_conversation_user', {
+          event: 'new_conversation',
+          receiverId: user.id,
+          payload: conv,
+        });
+      } catch (e) {
+        console.error('Failed to create referral conversation on acceptInvite:', e);
+      }
+    }
+
+    const clientInfo = getClientInfo(req);
+    const expiresInMs = getExpiry(req);
+    clientInfo.expiresInMs = expiresInMs;
+
+    const { accessToken, refreshToken } = await authService.generateTokensForUser(user.id, clientInfo);
+    res.cookie('refreshToken', refreshToken, getCookieOpts(expiresInMs));
+    res.json({ data: { user, accessToken } });
+  } catch (err) {
+    next(err);
+  }
+}
