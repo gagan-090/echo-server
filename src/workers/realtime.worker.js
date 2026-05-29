@@ -54,7 +54,8 @@ export const messageWorker = new Worker(QUEUE_NAME, async (job) => {
     'webrtc_ice_candidate', 
     'webrtc_offer', 
     'webrtc_answer',
-    'new_conversation'
+    'new_conversation',
+    'message_deleted'
   ].includes(event)) {
     getIO().to(`user_${receiverId}`).emit(event, payload);
   }

@@ -206,7 +206,7 @@ export async function createMessage(convId, senderId, content, messageType = 'te
 export async function softDelete(msgId, userId) {
   const { data: msg } = await supabase
     .from('messages')
-    .select('sender_id')
+    .select('sender_id, conversation_id')
     .eq('id', msgId)
     .single();
 
@@ -225,6 +225,16 @@ export async function softDelete(msgId, userId) {
     .eq('id', msgId);
 
   if (error) throw new Error(error.message);
+
+  const { data: conv } = await supabase.from('conversations').select('participant_a, participant_b').eq('id', msg.conversation_id).single();
+  if (conv) {
+    const receiverId = conv.participant_a === userId ? conv.participant_b : conv.participant_a;
+    await messageQueue.add('notify_message', {
+      event: 'message_deleted',
+      receiverId,
+      payload: { conversation_id: msg.conversation_id, id: msgId }
+    });
+  }
 }
 
 /**
