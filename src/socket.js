@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 
 let io;
+const userSockets = new Map(); // userId -> Set of socketIds
 
 export const initSocket = (httpServer) => {
   io = new Server(httpServer, {
@@ -47,8 +48,17 @@ export const initSocket = (httpServer) => {
   io.on('connection', (socket) => {
     logger.info(`🔌 Socket connected: ${socket.user.id} (${socket.id})`);
 
+    const userId = socket.user.id;
+    if (!userSockets.has(userId)) {
+      userSockets.set(userId, new Set());
+    }
+    userSockets.get(userId).add(socket.id);
+
     // Every user joins a private room named after their ID for direct routing
-    socket.join(`user_${socket.user.id}`);
+    socket.join(`user_${userId}`);
+
+    // Broadcast updated online list to everyone
+    io.emit('online_users', Array.from(userSockets.keys()));
 
     // --- Typing Indicators (Lightning Fast via Redis pub/sub) ---
     // Payload: { conversationId, receiverId }
@@ -79,6 +89,14 @@ export const initSocket = (httpServer) => {
 
     socket.on('disconnect', () => {
       logger.info(`🔌 Socket disconnected: ${socket.user.id} (${socket.id})`);
+      const userSocketSet = userSockets.get(userId);
+      if (userSocketSet) {
+        userSocketSet.delete(socket.id);
+        if (userSocketSet.size === 0) {
+          userSockets.delete(userId);
+        }
+      }
+      io.emit('online_users', Array.from(userSockets.keys()));
     });
   });
 
